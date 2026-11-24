@@ -19,11 +19,11 @@ The Web Store can only host the extension. The helper program has to be download
 
 1. **GitHub repo (free).** Create the public repo `thisismasdouk/chrome-profile-manager`. The helper downloads live in `docs/downloads/` and are served by GitHub Pages; the extension links to them.
 2. **Landing page (free).** In the repo, go to Settings → Pages, choose "Deploy from a branch", branch `main`, folder `/docs`. The site appears at https://thisismasdouk.github.io/chrome-profile-manager/ and includes the privacy policy the store asks for.
-3. **Payments ($1.99/month, 7-day free trial).**
+3. **Payments ($4.99 one-time, 3 free deletions).**
    1. Sign up at https://extensionpay.com and connect a Stripe account (Stripe works in Canada). ExtensionPay and Stripe each take a small cut of every payment, so check their current fees.
-   2. Register the extension in ExtensionPay with an ID such as `chrome-profile-manager`, and create a **$1.99 / month** subscription plan.
+   2. Register the extension in ExtensionPay with an ID such as `chrome-profile-manager`, and create a **$4.99 one-time ("Once - Lifetime")** plan. (Done: the extension is registered as `chrome-profile-manager`.)
    3. Put that ID in `extension/config.js` → `EXTPAY_ID`. While it's empty, the extension is free, which is handy for testing.
-   4. The trial is built in. For the first 7 days after install, everything works. After that, the Delete button changes to "Subscribe to delete · $1.99/month", and subscribers get "Manage subscription" to cancel or update their card.
+   4. Pricing is built in. Everyone can delete up to 3 profiles for free (counted in Chrome's synced storage, so reinstalling doesn't reset it). After that, the Delete button changes to "Unlock unlimited · $4.99 one-time", which opens the ExtensionPay checkout. Once someone has paid, the extension shows "Unlimited ✓".
 4. **Chrome Web Store developer account.** Register at https://chrome.google.com/webstore/devconsole (US$5 one-time fee). Upload `ready-to-upload/profile-manager-webstore.zip` as a **draft** to get the extension's permanent **Item ID**.
 5. **Rebuild with the store ID.** The helper only answers extensions it knows, so run `STORE_ID=<item id> ./build.sh`, then copy the new helper files from `dist/` into `docs/downloads/` and push.
 6. **Add the store link** to `STORE_URL` in `extension/config.js` (this enables the "leave a review" prompt) and in `docs/index.html` (this enables the Add to Chrome buttons). The link looks like `https://chromewebstore.google.com/detail/<item id>`.
@@ -49,7 +49,7 @@ Without a signature, Windows shows a blue **"Windows protected your PC"** box, a
 - **Permission justifications:**
   - `nativeMessaging`: "Chrome does not allow extensions to delete profile folders. The extension talks to a companion helper program the user installs, which lists profiles from Chrome's Local State file and deletes the ones the user selects."
   - `storage`: "Stores a random ID used to recognise which profile the user is in, so that profile can never be deleted."
-- **Disclose payment:** mention the 7-day trial and $1.99/month in the description (already in `STORE_LISTING.md`).
+- **Disclose payment:** mention the 3 free deletions and the $4.99 one-time unlock in the description (already in `STORE_LISTING.md`).
 - **Disclose the helper up front.** The first lines of the store description must say a free companion program is required and where it comes from. Reviewers reject extensions that hide required downloads.
 - **Privacy policy URL:** https://thisismasdouk.github.io/chrome-profile-manager/privacy.html (it's in `docs/privacy.html`).
 - **Data-use form:** declare "Personally identifiable information" (emails) and "Website content: no". Certify that data isn't sold or transferred and is used only for the single purpose.

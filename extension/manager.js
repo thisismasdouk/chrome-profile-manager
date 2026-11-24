@@ -29,54 +29,55 @@ async function getToken() {
   return pmToken;
 }
 
-// ---------- subscription (7-day free trial, then paid) ----------
+// ---------- pricing (a few free deletions, then a one-time unlock) ----------
 
-let license = { canDelete: true, kind: "free" };
+let license = { kind: "free", freeLeft: Infinity };
 const extpay = (typeof EXTPAY_ID !== "undefined" && EXTPAY_ID) ? ExtPay(EXTPAY_ID) : null;
+
+// Free deletions are counted in synced storage so reinstalling doesn't reset them.
+async function freeUsed() {
+  const { pmFreeUsed } = await chrome.storage.sync.get("pmFreeUsed");
+  return pmFreeUsed || 0;
+}
+async function addFreeUsed(n) {
+  await chrome.storage.sync.set({ pmFreeUsed: (await freeUsed()) + n });
+}
 
 async function checkLicense() {
   if (!extpay) {
-    license = { canDelete: true, kind: "free" };
+    license = { kind: "free", freeLeft: Infinity };
   } else {
+    let paid = false;
     try {
-      const user = await extpay.getUser();
-      if (user.paid) {
-        license = { canDelete: true, kind: "paid" };
-      } else {
-        const left = TRIAL_DAYS - (Date.now() - new Date(user.installedAt).getTime()) / 86400000;
-        license = left > 0 ? { canDelete: true, kind: "trial", daysLeft: Math.ceil(left) }
-                           : { canDelete: false, kind: "expired" };
-      }
-      await chrome.storage.local.set({ pmLicense: license });
+      paid = (await extpay.getUser()).paid;
+      await chrome.storage.local.set({ pmPaid: paid });
     } catch (e) {
       // Offline or payment service unreachable: use the last known status.
-      const { pmLicense } = await chrome.storage.local.get("pmLicense");
-      license = pmLicense || { canDelete: true, kind: "unknown" };
+      paid = !!(await chrome.storage.local.get("pmPaid")).pmPaid;
     }
+    license = paid ? { kind: "paid", freeLeft: Infinity }
+                   : { kind: "limited", freeLeft: Math.max(0, FREE_DELETIONS - (await freeUsed())) };
   }
   renderPlan();
   render();
 }
 
-function subscribe() { if (extpay) extpay.openPaymentPage(); }
+// Can the current selection be deleted without unlocking?
+const selectionAllowed = () => state.selected.size <= license.freeLeft;
+
+function unlock() { if (extpay) extpay.openPaymentPage(); }
 
 function renderPlan() {
   const p = $("plan");
   p.replaceChildren();
-  if (license.kind === "trial") {
-    p.append(el("span", { text: `Free trial: ${license.daysLeft} day${license.daysLeft === 1 ? "" : "s"} left` }));
-    const b = el("button", { class: "primary", text: `Subscribe · ${PRICE_TEXT}` });
-    b.onclick = subscribe;
-    p.append(b);
-  } else if (license.kind === "expired") {
-    p.append(el("span", { text: "Free trial ended" }));
-    const b = el("button", { class: "primary", text: `Subscribe · ${PRICE_TEXT}` });
-    b.onclick = subscribe;
+  if (license.kind === "limited") {
+    const n = license.freeLeft;
+    p.append(el("span", { text: n > 0 ? `${n} free deletion${n === 1 ? "" : "s"} left` : "Free deletions used" }));
+    const b = el("button", { class: "primary", text: `Unlock unlimited · ${PRICE_TEXT}` });
+    b.onclick = unlock;
     p.append(b);
   } else if (license.kind === "paid") {
-    const b = el("button", { class: "ghost", text: "Manage subscription" });
-    b.onclick = subscribe;
-    p.append(el("span", { text: "Subscribed ✓" }), b);
+    p.append(el("span", { text: "Unlimited ✓" }));
   }
   p.classList.toggle("hidden", p.childElementCount === 0);
 }
@@ -211,8 +212,10 @@ function render() {
     `${n} profile${n > 1 ? "s" : ""} selected${total ? ` · frees about ${fmtSize(total)}` : ""}`;
   $("deleteBtn").disabled = n === 0;
   const label = $("deleteLabel");
-  if (!license.canDelete) {
-    label.textContent = `Subscribe to delete · ${PRICE_TEXT}`;
+  if (n > 0 && !selectionAllowed()) {
+    label.textContent = license.freeLeft > 0
+      ? `Unlock to delete ${n} · ${PRICE_TEXT}`
+      : `Unlock unlimited · ${PRICE_TEXT}`;
     $("deleteBtn").disabled = false;
   } else {
     label.textContent = "Delete selected";
@@ -353,7 +356,7 @@ $("selectAll").onchange = (e) => {
 };
 
 $("deleteBtn").onclick = () => {
-  if (!license.canDelete) return subscribe();
+  if (!selectionAllowed()) return unlock();
   if ($("deleteBtn").dataset.blocked || state.selected.size === 0) return;
   const ul = $("confirmList");
   ul.replaceChildren(...[...state.selected].map((d) => {
@@ -373,12 +376,14 @@ $("cancelModal").onclick = () => $("modal").classList.add("hidden");
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("modal").classList.add("hidden"); });
 
 $("confirmDelete").onclick = async () => {
-  if (!license.canDelete) return subscribe();
+  if (!selectionAllowed()) return unlock();
   const now = document.querySelector('input[name="when"]:checked').value === "now";
   $("confirmDelete").disabled = true;
   try {
     const token = await getToken();
+    const count = state.selected.size;
     const resp = await callHelper({ cmd: "delete", token, dirs: [...state.selected], quitNow: now, relaunch: now });
+    if (license.kind === "limited") await addFreeUsed(count);
     $("modal").classList.add("hidden");
     state.pending = resp.pending;
     state.selected.clear();

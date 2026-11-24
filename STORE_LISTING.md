@@ -37,7 +37,7 @@ Chrome only lets you delete one profile at a time, and you have to open each one
 Chrome doesn't allow extensions to delete files on your computer, so Profile Manager uses a small free helper app (Windows and Mac). The first time you open the extension, it walks you through a one-minute setup: download the helper, open it, click OK. The helper runs only on your computer and never uploads anything.
 
 ★ PRICING
-7-day free trial with every feature, then $1.99/month. Cancel anytime.
+Delete up to 3 profiles free. Unlock unlimited bulk deleting with a one-time $4.99 payment. No subscription.
 
 ★ GREAT FOR
 • People who created profiles for old jobs, clients, schools or test accounts
