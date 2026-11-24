@@ -20,6 +20,8 @@ Delete multiple Chrome profiles at once, instead of removing them one by one.
 
 Chrome only lets you delete one profile at a time, and you have to open each one to do it. Profile Manager shows every Chrome profile on your computer in a single list. Tick the ones you don't need, click Delete, and they're all gone.
 
+Requires a small free helper app (Windows and Mac). The extension walks you through the one-minute setup the first time you open it.
+
 ★ WHAT YOU CAN DO
 • See all your Chrome profiles in one place, with name, Google account email, picture, last used date and disk space
 • Select many profiles and delete them in one click
