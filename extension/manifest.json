@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Profile Manager: Bulk Delete Chrome Profiles",
+  "short_name": "Profile Manager",
+  "version": "1.0.0",
+  "description": "Delete multiple Chrome profiles at once. See every profile with its email, last use and size, then remove many in one click.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvNWXLtzH3a+QRNSmTKOhWbo/pg2EDCa5Ns3aGH66Sl+RM8gLAIxDxEhe1cofXx1Ig0i1DUeeAYqJhEY6QECBrehfQ7gy+jXZxRPEkHzFLGqDe/ppkO63njStQurW/Ub8nslHEcSPUv4lh6DuLkGLUH9dBJasMww/lgEfvcSyS4Vhj7U00y/9lGG9/iccHEY+PmfAcfllKF9Ws8Pj0X7DkOwzmnj06fZuRdUfFv/z6ncLV3SBo/QTSlwh9hnygWadM+dSfqCeE30XX1NCmKxlXrH1BgtRssQ9OlT/vxslA1qAmoovgBWOK1qanDUJ6e/FKT4/js71m1MwRqMcSup3BwIDAQAB",
+  "permissions": [
+    "nativeMessaging",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Profile Manager: delete Chrome profiles in bulk",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "homepage_url": "https://thisismasdouk.github.io/chrome-profile-manager/"
+}
