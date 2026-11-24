@@ -15,4 +15,4 @@ const PRICE_TEXT = "$4.99 one-time";
 
 // Chrome Web Store page (fill in after the first upload). Used for the
 // "leave a review" prompt shown once after a successful cleanup.
-const STORE_URL = "";
+const STORE_URL = "https://chromewebstore.google.com/detail/nanlppofdmogahjbobcoaojkhlceackf";
