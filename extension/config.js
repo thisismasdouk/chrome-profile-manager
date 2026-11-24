@@ -8,7 +8,7 @@ const HELPER_DOWNLOADS = {
 // Payments (ExtensionPay.com, built on Stripe). Put the extension ID you
 // register on extensionpay.com here. While it is "", payments are off and
 // the extension is free (handy for testing).
-const EXTPAY_ID = "";
+const EXTPAY_ID = "chrome-profile-manager";
 const TRIAL_DAYS = 7;
 const PRICE_TEXT = "$1.99/month";
 
