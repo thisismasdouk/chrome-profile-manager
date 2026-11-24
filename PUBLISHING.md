@@ -17,7 +17,7 @@ The Web Store can only host the extension. The helper program has to be download
 
 ## Step by step
 
-1. **GitHub repo (free).** Create the public repo `thisismasdouk/chrome-profile-manager`. Claude uploads this kit and publishes the helper files as a release. The extension already links to `…/releases/latest/download/…`.
+1. **GitHub repo (free).** Create the public repo `thisismasdouk/chrome-profile-manager`. The helper downloads live in `docs/downloads/` and are served by GitHub Pages; the extension links to them.
 2. **Landing page (free).** In the repo, go to Settings → Pages, choose "Deploy from a branch", branch `main`, folder `/docs`. The site appears at https://thisismasdouk.github.io/chrome-profile-manager/ and includes the privacy policy the store asks for.
 3. **Payments ($1.99/month, 7-day free trial).**
    1. Sign up at https://extensionpay.com and connect a Stripe account (Stripe works in Canada). ExtensionPay and Stripe each take a small cut of every payment, so check their current fees.
@@ -25,7 +25,7 @@ The Web Store can only host the extension. The helper program has to be download
    3. Put that ID in `extension/config.js` → `EXTPAY_ID`. While it's empty, the extension is free, which is handy for testing.
    4. The trial is built in. For the first 7 days after install, everything works. After that, the Delete button changes to "Subscribe to delete · $1.99/month", and subscribers get "Manage subscription" to cancel or update their card.
 4. **Chrome Web Store developer account.** Register at https://chrome.google.com/webstore/devconsole (US$5 one-time fee). Upload `ready-to-upload/profile-manager-webstore.zip` as a **draft** to get the extension's permanent **Item ID**.
-5. **Rebuild with the store ID.** The helper only answers extensions it knows, so run `STORE_ID=<item id> ./build.sh`, then upload the new helper files to the GitHub release.
+5. **Rebuild with the store ID.** The helper only answers extensions it knows, so run `STORE_ID=<item id> ./build.sh`, then copy the new helper files from `dist/` into `docs/downloads/` and push.
 6. **Add the store link** to `STORE_URL` in `extension/config.js` (this enables the "leave a review" prompt) and in `docs/index.html` (this enables the Add to Chrome buttons). The link looks like `https://chromewebstore.google.com/detail/<item id>`.
 7. **Build once more and upload** the new `profile-manager-webstore.zip` to the draft. Fill in the listing from `STORE_LISTING.md`, add the images from `store-assets/`, and in the store's pricing section say the extension "contains in-app purchases". Then submit for review.
 

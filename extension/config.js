@@ -1,9 +1,8 @@
-// Where people download the helper program (GitHub Releases of the public repo).
-// "latest/download" always points to the newest release, so these never need changing.
+// Where people download the helper program (served by GitHub Pages from docs/downloads).
 const HELPER_DOWNLOADS = {
-  win: "https://github.com/thisismasdouk/chrome-profile-manager/releases/latest/download/ProfileManagerHelperSetup.exe",
-  mac: "https://github.com/thisismasdouk/chrome-profile-manager/releases/latest/download/ProfileManagerHelper-mac.zip",
-  linux: "https://github.com/thisismasdouk/chrome-profile-manager/releases/latest/download/ProfileManagerHelper-linux.tar.gz",
+  win: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelperSetup.exe",
+  mac: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-mac.zip",
+  linux: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-linux.tar.gz",
 };
 
 // Payments (ExtensionPay.com, built on Stripe). Put the extension ID you

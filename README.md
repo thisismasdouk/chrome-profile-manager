@@ -3,7 +3,7 @@
 A Chrome extension that lists every Chrome profile on your computer and deletes many of them at once. Chrome normally makes you remove them one by one.
 
 - **Website:** https://thisismasdouk.github.io/chrome-profile-manager/
-- **Download the helper app:** see [Releases](https://github.com/thisismasdouk/chrome-profile-manager/releases/latest)
+- **Download the helper app:** [Windows](https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelperSetup.exe) · [Mac](https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-mac.zip) · [Linux](https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-linux.tar.gz)
 - **Privacy policy:** https://thisismasdouk.github.io/chrome-profile-manager/privacy.html
 
 ## How it works
