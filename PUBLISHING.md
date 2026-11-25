@@ -34,6 +34,7 @@ The Web Store can only host the extension. The helper program has to be download
 Without a signature, Windows shows a blue **"Windows protected your PC"** box, and macOS refuses to open the helper until the user right-clicks and chooses Open. Many people stop at that point, and some antivirus tools flag unsigned downloads.
 
 **Windows**
+- **Set up:** see [SIGNING.md](SIGNING.md). The GitHub Action `.github/workflows/sign-windows.yml` builds and signs the Windows helper and setup.
 - **Cheapest: Microsoft Artifact Signing** (formerly "Trusted Signing"). It's a monthly Azure subscription, roughly US$10/month. Microsoft verifies your identity. Individual developers in the US and Canada have been eligible, but check the current rules. Sign with `signtool` or the GitHub Action Microsoft provides.
 - **Alternative: an OV code-signing certificate** from a provider such as Sectigo, DigiCert or SSL.com, roughly US$200–500/year. The key now has to live on a hardware token or in the provider's cloud signing service.
 - **What to sign:** `ProfileManagerHelperSetup.exe`. Also sign `profile-helper.exe` before it's embedded, by running build.sh, signing `helper/setup/payload/profile-helper.exe`, then re-running only the setup build line.
