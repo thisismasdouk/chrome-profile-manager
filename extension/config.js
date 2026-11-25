@@ -1,7 +1,7 @@
 // Where people download the helper program (served by GitHub Pages from docs/downloads).
 const HELPER_DOWNLOADS = {
   win: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelperSetup.exe",
-  mac: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-mac.zip",
+  mac: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-mac.pkg",
   linux: "https://thisismasdouk.github.io/chrome-profile-manager/downloads/ProfileManagerHelper-linux.tar.gz",
 };
 

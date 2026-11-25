@@ -1,0 +1,90 @@
+# Builds the Microsoft Store package (.msix) for the Windows helper.
+# The Store signs the package itself, so no certificate is needed here.
+#
+# Upload the .msix from this run's Artifacts to Partner Center
+# (steps in MSSTORE.md). Pull requests also build it, plus a test install
+# with a throwaway certificate, to catch packaging mistakes early.
+name: Microsoft Store package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "helper/**"
+      - "packaging/msstore/**"
+      - ".github/workflows/msstore.yml"
+
+env:
+  STORE_ID: nanlppofdmogahjbobcoaojkhlceackf
+  # Copy these from Partner Center > your app > Product identity into
+  # Settings > Secrets and variables > Actions > Variables.
+  IDENTITY_NAME: ${{ vars.MSSTORE_IDENTITY_NAME || 'Techma.ProfileManagerHelper' }}
+  PUBLISHER: ${{ vars.MSSTORE_PUBLISHER || 'CN=00000000-0000-0000-0000-000000000000' }}
+  PUBLISHER_DISPLAY_NAME: ${{ vars.MSSTORE_PUBLISHER_DISPLAY_NAME || 'Techma' }}
+  DISPLAY_NAME: ${{ vars.MSSTORE_DISPLAY_NAME || 'Profile Manager Helper for Chrome' }}
+
+jobs:
+  msix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: helper/go.mod
+          cache-dependency-path: helper/go.mod
+
+      - name: Build helper and setup
+        shell: bash
+        working-directory: helper
+        run: |
+          set -e
+          mkdir -p setup/payload ../dist/msix
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -X main.storeExtensionID=$STORE_ID" \
+            -o setup/payload/profile-helper.exe .
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -H windowsgui" \
+            -o ../dist/msix/ProfileManagerHelperSetup.exe ./setup
+
+      - name: Make the .msix
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = "1.0.${{ github.run_number }}.0"
+          Copy-Item -Recurse packaging/msstore/Assets dist/msix/Assets
+          $m = Get-Content packaging/msstore/AppxManifest.xml -Raw
+          $m = $m.Replace('@IDENTITY_NAME@', $env:IDENTITY_NAME).Replace('@PUBLISHER@', $env:PUBLISHER)
+          $m = $m.Replace('@PUBLISHER_DISPLAY_NAME@', $env:PUBLISHER_DISPLAY_NAME).Replace('@DISPLAY_NAME@', $env:DISPLAY_NAME)
+          $m = $m.Replace('@VERSION@', $version)
+          Set-Content -Path dist/msix/AppxManifest.xml -Value $m -Encoding utf8
+          $kit = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\makeappx.exe" | Sort-Object FullName | Select-Object -Last 1
+          Write-Host "Using $($kit.FullName)"
+          & $kit.FullName pack /o /d dist/msix /p "dist/ProfileManagerHelper-$version.msix"
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+          "MSIX_PATH=dist/ProfileManagerHelper-$version.msix" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Test install (throwaway certificate)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Copy-Item $env:MSIX_PATH dist/test.msix
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $env:PUBLISHER `
+            -CertStoreLocation Cert:\CurrentUser\My -TextExtension @("2.5.29.19={text}")
+          $pfx = "$env:RUNNER_TEMP\test.pfx"; $pw = ConvertTo-SecureString -String "test" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath $pfx -Password $pw | Out-Null
+          Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\LocalMachine\TrustedPeople -Password $pw | Out-Null
+          $st = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          & $st.FullName sign /fd SHA256 /f $pfx /p test dist/test.msix
+          if ($LASTEXITCODE -ne 0) { throw "test signing failed" }
+          Add-AppxPackage -Path dist/test.msix
+          $p = Get-AppxPackage -Name $env:IDENTITY_NAME
+          if (-not $p) { throw "package did not install" }
+          Write-Host "Installed $($p.PackageFullName) at $($p.InstallLocation)"
+          Get-ChildItem $p.InstallLocation | Format-Table Name, Length
+          Remove-AppxPackage -Package $p.PackageFullName
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msstore-package
+          path: ${{ env.MSIX_PATH }}

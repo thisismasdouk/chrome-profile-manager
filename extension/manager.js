@@ -316,10 +316,10 @@ async function showSetup() {
   $("downloadHelper").textContent = { win: "Download the helper for Windows", mac: "Download the helper for Mac", linux: "Download the helper for Linux" }[key];
   $("runStep").textContent = {
     win: "If Windows shows \"Windows protected your PC\", click More info, then Run anyway.",
-    mac: "Open the downloaded zip, then right-click \"Install Profile Manager helper\" and choose Open.",
+    mac: "Open the downloaded installer and click Continue, then Install.",
     linux: "Unpack the download and run ./install-linux.sh.",
   }[key];
-  $("runStepShort").textContent = { win: "and click OK", mac: "right-click, Open", linux: "run the installer" }[key];
+  $("runStepShort").textContent = { win: "and click OK", mac: "and click Install", linux: "run the installer" }[key];
   // Keep checking quietly; switch to the profile list as soon as the helper answers.
   if (!setupTimer) {
     setupTimer = setInterval(async () => {
