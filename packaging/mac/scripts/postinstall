@@ -1,0 +1,21 @@
+#!/bin/bash
+# Runs (as root) at the end of the Mac installer. Registers the helper with
+# Chrome for the person who is logged in, the same as "profile-helper --install".
+HELPER="/Library/Application Support/ProfileManagerHelper/profile-helper"
+U=$(stat -f%Su /dev/console)
+if [ -z "$U" ] || [ "$U" = "root" ] || [ "$U" = "loginwindow" ]; then U="${USER:-}"; fi
+if [ -z "$U" ] || [ "$U" = "root" ]; then
+  echo "Profile Manager helper: no logged-in user found" >&2
+  exit 1
+fi
+H=$(dscl . -read "/Users/$U" NFSHomeDirectory | awk '{print $2}')
+OUT=$(sudo -u "$U" -H env HOME="$H" "$HELPER" --install-quiet 2>&1)
+RC=$?
+echo "Profile Manager helper install for $U: rc=$RC $OUT" | logger -t ProfileManagerHelper
+if [ $RC -ne 0 ]; then
+  MSG=$(printf '%s' "$OUT" | sed 's/"/\\"/g')
+  launchctl asuser "$(id -u "$U")" sudo -u "$U" osascript -e \
+    "display alert \"Profile Manager helper\" message \"The helper could not be set up: $MSG\" as critical" >/dev/null 2>&1 || true
+  exit 1
+fi
+exit 0

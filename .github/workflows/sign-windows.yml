@@ -1,0 +1,116 @@
+# Builds the Windows helper and its one-click setup, then signs both with
+# Microsoft Artifact Signing (formerly "Trusted Signing") so Windows shows
+# "Techma" as the publisher instead of "Unknown publisher".
+#
+# Run it from the Actions tab: "Build and sign Windows helper" > Run workflow.
+# One-time setup (Azure account, secrets) is described in SIGNING.md.
+name: Build and sign Windows helper
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Commit the signed setup to docs/downloads (the website download)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  # Chrome Web Store item ID. The helper only talks to this extension (and the developer copy).
+  STORE_ID: nanlppofdmogahjbobcoaojkhlceackf
+
+jobs:
+  build-sign:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: helper/go.mod
+          cache-dependency-path: helper/go.mod
+
+      - name: Build helper (amd64 + arm64)
+        shell: bash
+        working-directory: helper
+        run: |
+          set -e
+          for a in amd64 arm64; do
+            mkdir -p ../dist/bin/windows-$a
+            CGO_ENABLED=0 GOOS=windows GOARCH=$a go build -trimpath \
+              -ldflags="-s -w -X main.storeExtensionID=$STORE_ID" \
+              -o ../dist/bin/windows-$a/profile-helper.exe .
+          done
+
+      # Sign the helper first, because the setup program embeds it.
+      - name: Sign helper
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files: |
+            ${{ github.workspace }}\dist\bin\windows-amd64\profile-helper.exe
+            ${{ github.workspace }}\dist\bin\windows-arm64\profile-helper.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Build setup (embeds the signed amd64 helper)
+        shell: bash
+        working-directory: helper
+        run: |
+          set -e
+          mkdir -p setup/payload
+          cp ../dist/bin/windows-amd64/profile-helper.exe setup/payload/
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath \
+            -ldflags="-s -w -H windowsgui" \
+            -o ../dist/ProfileManagerHelperSetup.exe ./setup
+
+      - name: Sign setup
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files: ${{ github.workspace }}\dist\ProfileManagerHelperSetup.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Check signatures
+        shell: pwsh
+        run: |
+          $files = @("dist\ProfileManagerHelperSetup.exe","dist\bin\windows-amd64\profile-helper.exe","dist\bin\windows-arm64\profile-helper.exe")
+          foreach ($f in $files) {
+            $s = Get-AuthenticodeSignature $f
+            Write-Host "$f : $($s.Status) : $($s.SignerCertificate.Subject)"
+            if ($s.Status -ne 'Valid') { throw "$f is not validly signed" }
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-windows-helper
+          path: |
+            dist/ProfileManagerHelperSetup.exe
+            dist/bin/windows-*/profile-helper.exe
+
+      - name: Publish to website downloads
+        if: ${{ inputs.publish }}
+        shell: bash
+        run: |
+          set -e
+          cp dist/ProfileManagerHelperSetup.exe docs/downloads/ProfileManagerHelperSetup.exe
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/downloads/ProfileManagerHelperSetup.exe
+          git commit -m "Publish signed Windows helper setup" || { echo "No change"; exit 0; }
+          git push
